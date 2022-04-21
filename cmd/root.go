@@ -31,7 +31,7 @@ func InitApp() *cli.App {
 						Aliases:     []string{"o"},
 						Usage:       "openapi types './petstore.yaml -o ./path/to/output/file.go'",
 						Required:    false,
-						Value:       "generated.go",
+						Value:       "types.go",
 						DefaultText: "Set a path to output file",
 					},
 				},
