@@ -1,7 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"gopenapi/cmd"
+	"os"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	err := cmd.InitApp().Run(os.Args)
+	if err != nil {
+		fmt.Printf("[ERROR]: %s", err)
+		os.Exit(1)
+	}
 }
