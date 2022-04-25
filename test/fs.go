@@ -11,6 +11,7 @@ var FS embed.FS
 
 // LoadTestSchema loads the test schema from the embedded file system.
 // it takes a path to OpenAPI 3 the schema file in json or yaml format.
+// The path must be relative to the root of the embedded file system.
 func LoadTestSchema(path string) (*openapi3.T, error) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

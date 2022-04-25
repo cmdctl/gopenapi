@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
+	"gopenapi/pkg/types"
 )
 
 func InitApp() *cli.App {
@@ -21,18 +22,36 @@ func InitApp() *cli.App {
 						return cli.Exit("spec file is required", 1)
 					}
 					output := c.String("output")
+					pkg := c.String("package")
 					fmt.Println("Generating types from spec:", spec)
 					fmt.Println("Output:", output)
+					fmt.Println("Package:", pkg)
+					err := types.Generate(types.Params{
+						PackageName: pkg,
+						OutputFile:  output,
+						SpecFile:    spec,
+					})
+					if err != nil {
+						return cli.Exit(err.Error(), 1)
+					}
 					return nil
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:        "output",
 						Aliases:     []string{"o"},
-						Usage:       "openapi types './petstore.yaml -o ./path/to/output/file.go'",
+						Usage:       "gopenapi types './petstore.yaml -o ./path/to/output/file.go'",
 						Required:    false,
 						Value:       "types.go",
 						DefaultText: "Set a path to output file",
+					},
+					&cli.StringFlag{
+						Name:        "package",
+						Aliases:     []string{"p"},
+						Usage:       "gopenapi types './petstore.yaml --package=main'",
+						Required:    true,
+						Value:       "main",
+						DefaultText: "Set a package name for the generated types",
 					},
 				},
 			},
