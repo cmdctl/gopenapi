@@ -14,8 +14,10 @@ import (
 )
 
 //go:embed types.go.tmpl
+// Tmpl is the template for the generated code.
 var Tmpl string
 
+// Property represents a property of a struct.
 type Property struct {
 	Name        string
 	NameJSON    string
@@ -24,6 +26,7 @@ type Property struct {
 	Description string
 }
 
+// Type represents a struct type.
 type Type struct {
 	Name        string
 	Description string
@@ -31,11 +34,13 @@ type Type struct {
 	Properties  []Property
 }
 
+// GeneratedFile represents a generated file.
 type GeneratedFile struct {
 	PackageName string
 	Types       []Type
 }
 
+// Params for the Generate function.
 type Params struct {
 	PackageName string
 	OutputFile  string
