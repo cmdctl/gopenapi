@@ -17,6 +17,12 @@ import (
 // Tmpl is the template for the generated code.
 var Tmpl string
 
+type TypeResolver = func(schemaType string, schemaRef string) (langType string)
+
+var typeResolvers = map[string]TypeResolver{
+	"golang": resolveGolangTypes,
+}
+
 // Property represents a property of a struct.
 type Property struct {
 	Name        string
@@ -45,6 +51,7 @@ type Params struct {
 	PackageName string
 	OutputFile  string
 	SpecFile    string
+	Lang        string
 }
 
 // Generate generates go source code with defined types from OpenAPI 3 spec file path in the given output file path.
@@ -60,7 +67,7 @@ func Generate(params Params) error {
 	}
 
 	schemas := doc.Components.Schemas
-	types := loadFromSchemas(schemas)
+	types := loadFromSchemas(schemas, params.Lang)
 	generatedFile.Types = types
 	if err != nil {
 		return err
@@ -82,7 +89,7 @@ func Generate(params Params) error {
 	return err
 }
 
-func loadFromSchemas(schemas openapi3.Schemas) []Type {
+func loadFromSchemas(schemas openapi3.Schemas, lang string) []Type {
 	var types []Type
 	for k, v := range schemas {
 		t := &Type{
@@ -91,7 +98,11 @@ func loadFromSchemas(schemas openapi3.Schemas) []Type {
 			Ref:         v.Ref,
 		}
 		for pk, pv := range v.Value.Properties {
-			pType := getPropertyType(pv.Value.Type, pv.Ref)
+			resolveType, ok := typeResolvers[lang]
+			if !ok {
+				resolveType = resolveGolangTypes
+			}
+			pType := resolveType(pv.Value.Type, pv.Ref)
 			t.Properties = append(t.Properties, Property{
 				Name:        capitalize(pk),
 				NameJSON:    pk,
@@ -105,8 +116,7 @@ func loadFromSchemas(schemas openapi3.Schemas) []Type {
 	return types
 }
 
-func getPropertyType(t string, ref string) string {
-
+func resolveGolangTypes(t string, ref string) string {
 	switch t {
 	case "string":
 		return "string"
