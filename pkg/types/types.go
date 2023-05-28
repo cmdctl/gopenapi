@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"go/format"
-	"io/ioutil"
 	"strings"
 	"text/template"
 	"unicode"
@@ -40,8 +39,8 @@ type Type struct {
 	Properties  []Property
 }
 
-// GeneratedFile represents a generated file.
-type GeneratedFile struct {
+// GeneratedTypes represents a generated file.
+type GeneratedTypes struct {
 	PackageName string
 	Types       []Type
 }
@@ -55,38 +54,37 @@ type Params struct {
 }
 
 // Generate generates go source code with defined types from OpenAPI 3 spec file path in the given output file path.
-func Generate(params Params) error {
-	generatedFile := &GeneratedFile{
+func Generate(params Params) (*GeneratedTypes, []byte, error) {
+	buf := bytes.NewBuffer([]byte{})
+	generatedTypes := &GeneratedTypes{
 		PackageName: params.PackageName,
 	}
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	doc, err := loader.LoadFromFile(params.SpecFile)
 	if err != nil {
-		return fmt.Errorf("[ERROR] failed to load spec file: %s\n", err)
+		return generatedTypes, buf.Bytes(), fmt.Errorf("[ERROR] failed to load spec file: %s\n", err)
 	}
 
 	schemas := doc.Components.Schemas
 	types := loadFromSchemas(schemas, params.Lang)
-	generatedFile.Types = types
+	generatedTypes.Types = types
 	if err != nil {
-		return err
+		return generatedTypes, buf.Bytes(), err
 	}
 	t, err := template.New("types").Parse(Tmpl)
 	if err != nil {
-		return err
+		return generatedTypes, buf.Bytes(), err
 	}
-	buf := bytes.NewBuffer([]byte{})
-	err = t.Execute(buf, generatedFile)
+	err = t.Execute(buf, generatedTypes)
 	if err != nil {
-		return err
+		return generatedTypes, buf.Bytes(), err
 	}
 	source, err := format.Source(buf.Bytes())
 	if err != nil {
-		return err
+		return generatedTypes, buf.Bytes(), err
 	}
-	err = ioutil.WriteFile(params.OutputFile, source, 0644)
-	return err
+	return generatedTypes, source, nil
 }
 
 func loadFromSchemas(schemas openapi3.Schemas, lang string) []Type {

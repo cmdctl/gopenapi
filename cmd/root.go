@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/urfave/cli/v2"
 	"gopenapi/pkg/types"
+	"io/ioutil"
 )
 
 func InitApp() *cli.App {
@@ -26,11 +27,15 @@ func InitApp() *cli.App {
 					fmt.Println("Generating types from spec:", spec)
 					fmt.Println("Output:", output)
 					fmt.Println("Package:", pkg)
-					err := types.Generate(types.Params{
+					_, b, err := types.Generate(types.Params{
 						PackageName: pkg,
 						OutputFile:  output,
 						SpecFile:    spec,
 					})
+					if err != nil {
+						return cli.Exit(err.Error(), 1)
+					}
+					err = ioutil.WriteFile(output, b, 0644)
 					if err != nil {
 						return cli.Exit(err.Error(), 1)
 					}
